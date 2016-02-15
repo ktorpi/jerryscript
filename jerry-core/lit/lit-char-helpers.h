@@ -77,9 +77,7 @@ extern bool lit_char_is_line_terminator (ecma_char_t);
 /* LIT_CHAR_BACKSLASH defined above */
 
 extern bool lit_char_is_unicode_letter (ecma_char_t);
-extern bool lit_char_is_unicode_combining_mark (ecma_char_t);
-extern bool lit_char_is_unicode_digit (ecma_char_t);
-extern bool lit_char_is_unicode_connector_punctuation (ecma_char_t);
+extern bool lit_char_is_unicode_non_letter_ident_part (ecma_char_t);
 
 /*
  * Punctuator characters (ECMA-262 v5, 7.7)
