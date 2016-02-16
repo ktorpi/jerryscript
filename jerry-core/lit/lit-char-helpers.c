@@ -17,6 +17,31 @@
 #include "lit/lit-unicode-ranges-array.inc.h"
 #include "lit-strings.h"
 
+
+static bool searchForChar(ecma_char_t c, ecma_char_t *array, size_t size_of_array)
+{
+  ecma_char_t *buttom = array;
+  ecma_char_t *middle = array + size_of_array/2;
+  ecma_char_t *top = array + size_of_array - 1;
+  while (buttom <= top) {
+    if (c < *middle)
+    {
+      top = middle-1;
+    }
+    else if (c > *middle) 
+    {
+      buttom = middle+1;
+    }
+    middle = buttom + (top - buttom)/2;
+    if (*middle == c)
+    {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 /**
  * Check if specified character is one of the Format-Control characters
  *
@@ -49,12 +74,9 @@ lit_char_is_space_separator (ecma_char_t c) /**< code unit */
     return true;
   }
 
-  for (unsigned i = 0; i < sizeof unicode_separator_chars / sizeof unicode_separator_chars[0]; ++i)
+  if (searchForChar (c, unicode_separator_chars, sizeof unicode_separator_chars / sizeof unicode_separator_chars[0]))
   {
-    if (c == unicode_separator_chars[i])
-    {
-      return true;
-    }
+    return true;
   }
 
   return false;
@@ -133,12 +155,10 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
     }
   }
 
-  for (unsigned i = 0; i < sizeof unicode_letter_interval_chars / sizeof unicode_letter_interval_chars[0]; ++i)
+  if (searchForChar (c, unicode_letter_interval_chars, sizeof unicode_letter_interval_chars 
+                                                                 / sizeof unicode_letter_interval_chars[0]))
   {
-    if (c == unicode_letter_interval_chars[i])
-    {
-      return true;
-    }
+    return true;
   }
 
   return false;
@@ -171,13 +191,10 @@ lit_char_is_unicode_non_letter_ident_part (ecma_char_t c) /**< code unit */
     }
   }
 
-  for (unsigned i = 0; i < sizeof unicode_non_letter_identifier_part_interval_chars
-                                                / sizeof unicode_non_letter_identifier_part_interval_chars[0]; ++i)
+  if (searchForChar (c, unicode_non_letter_identifier_part_interval_chars, sizeof unicode_non_letter_identifier_part_interval_chars 
+                                                                 / sizeof unicode_non_letter_identifier_part_interval_chars[0]))
   {
-    if (c == unicode_non_letter_identifier_part_interval_chars[i])
-    {
-      return true;
-    }
+    return true;
   }
 
   return false;
