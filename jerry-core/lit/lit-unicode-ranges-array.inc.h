@@ -1,6 +1,11 @@
+#ifndef LIT_UNICODE_RANGES_INC_H_
+#define LIT_UNICODE_RANGES_INC_H_
+
 #define UNICODE_LETTER_INTERVALS \
-{ 0x0041, 0x005A }, \
-{ 0x0061, 0x007A }, \
+/* handled separetely
+ * { 0x0041, 0x005A },
+ * { 0x0061, 0x007A },
+ */ \
 { 0x00C0, 0x00D6 }, \
 { 0x00D8, 0x00F6 }, \
 { 0x00F8, 0x021F }, \
@@ -205,7 +210,7 @@
 { 0xFFD2, 0xFFD7 }, \
 { 0xFFDA, 0xFFDC }
 
-#define UNICODE_LETTER_INDIVIDUAL_CHARS \
+#define UNICODE_LETTER_CHARS \
 0x00AA, \
 0x00B5, \
 0x00BA, \
@@ -263,8 +268,8 @@
 0xFB3E, \
 0xFE74
 
-#define UNICODE_NON_LETTER_IDENTIFIER_PART_INTERVALS \
-{ 0x0030, 0x0039 }, \
+#define UNICODE_NON_LETTER_IDENT_PART_INTERVALS \
+/* { 0x0030, 0x0039 },  decimal digits: handled separately*/ \
 { 0x0300, 0x034E }, \
 { 0x0360, 0x0362 }, \
 { 0x0483, 0x0486 }, \
@@ -364,7 +369,7 @@
 { 0xFE4D, 0xFE4F }, \
 { 0xFF10, 0xFF19 }
 
-#define UNICODE_NON_LETTER_IDENTIFIER_PART_INDIVIDUAL_CHARS \
+#define UNICODE_NON_LETTER_IDENT_PART_CHARS \
 0x005F, \
 0x05BF, \
 0x05C4, \
@@ -398,8 +403,10 @@
 { 0x2000, 0x200B }
 
 #define UNICODE_SEPARATOR_CHARS \
-0x0020, \
-0x00A0, \
+/* these two handled separatly @see lit_char_is_space_separator
+ * 0x0020, space
+ * 0x00A0, non-braking space
+ */ \
 0x1680, \
 0x180E, /* manually added */ \
 0x202F, /* manually added */ \
@@ -410,30 +417,30 @@ typedef struct
 {
   uint16_t l;
   uint16_t u;
-} unicode_letter_interval_t;
+} unicode_char_interval_t;
 
-static unicode_letter_interval_t unicode_letter_intervals_array[] =
+static unicode_char_interval_t unicode_letter_intervals[] =
 {
   UNICODE_LETTER_INTERVALS
 };
 
-static uint16_t unicode_letter_interval_chars[] =
+static uint16_t unicode_letter_chars[] =
 {
-  UNICODE_LETTER_INDIVIDUAL_CHARS
+  UNICODE_LETTER_CHARS
 };
 
-static unicode_letter_interval_t unicode_non_letter_identifier_part_intervals_array[] =
+static unicode_char_interval_t unicode_non_letter_ident_part_intervals[] =
 {
-  UNICODE_NON_LETTER_IDENTIFIER_PART_INTERVALS
+  UNICODE_NON_LETTER_IDENT_PART_INTERVALS
 };
 
-static uint16_t unicode_non_letter_identifier_part_interval_chars[] =
+static uint16_t unicode_non_letter_ident_part_chars[] =
 {
-  UNICODE_NON_LETTER_IDENTIFIER_PART_INDIVIDUAL_CHARS
+  UNICODE_NON_LETTER_IDENT_PART_CHARS
 };
 
 
-static unicode_letter_interval_t unicode_separator_char_intervals[] = {
+static unicode_char_interval_t unicode_separator_char_intervals[] = {
   UNICODE_SEPARATOR_CHAR_INTERVALS
 };
 
@@ -441,3 +448,5 @@ static uint16_t unicode_separator_chars[] =
 {
   UNICODE_SEPARATOR_CHARS
 };
+
+#endif

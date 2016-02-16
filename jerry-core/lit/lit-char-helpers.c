@@ -17,8 +17,10 @@
 #include "lit/lit-unicode-ranges-array.inc.h"
 #include "lit-strings.h"
 
+#define NUM_OF_ELEMENTS(array) (sizeof (array) / sizeof ((array)[0]))
 
-static bool searchForChar(ecma_char_t c, ecma_char_t *array, size_t size_of_array)
+static bool
+search_char_in_char_array(ecma_char_t c, ecma_char_t *array, size_t size_of_array)
 {
   ecma_char_t *buttom = array;
   ecma_char_t *middle = array + size_of_array/2;
@@ -38,7 +40,32 @@ static bool searchForChar(ecma_char_t c, ecma_char_t *array, size_t size_of_arra
       return true;
     }
   }
-  
+
+  return false;
+}
+
+static bool
+search_char_in_interval_array(ecma_char_t c, unicode_char_interval_t *array, size_t size_of_array)
+{
+  unicode_char_interval_t *buttom = array;
+  unicode_char_interval_t *middle = array + size_of_array/2;
+  unicode_char_interval_t *top = array + size_of_array - 1;
+  while (buttom <= top) {
+    if (c < middle->l)
+    {
+      top = middle-1;
+    }
+    else if (c > middle->u)
+    {
+      buttom = middle+1;
+    }
+    middle = buttom + (top - buttom)/2;
+    if (middle->l <= c && c <= middle->u)
+    {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -69,17 +96,9 @@ bool
 lit_char_is_space_separator (ecma_char_t c) /**< code unit */
 {
   /* Zs */
-  if (c >= unicode_separator_char_intervals[0].l && c <= unicode_separator_char_intervals[0].u)
-  {
-    return true;
-  }
-
-  if (searchForChar (c, unicode_separator_chars, sizeof unicode_separator_chars / sizeof unicode_separator_chars[0]))
-  {
-    return true;
-  }
-
-  return false;
+  return (c == LIT_CHAR_SP || c == LIT_CHAR_NBSP // most common ones
+         || (c >= unicode_separator_char_intervals[0].l && c <= unicode_separator_char_intervals[0].u)
+         || search_char_in_char_array (c, unicode_separator_chars, NUM_OF_ELEMENTS (unicode_separator_chars)));
 } /* lit_char_is_space_separator */
 
 /**
@@ -147,21 +166,8 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
     return false;
   }
 
-  for (unsigned i = 0; i < sizeof unicode_letter_intervals_array / sizeof unicode_letter_intervals_array[0]; ++i)
-  {
-    if (c >= unicode_letter_intervals_array[i].l && c <= unicode_letter_intervals_array[i].u)
-    {
-      return true;
-    }
-  }
-
-  if (searchForChar (c, unicode_letter_interval_chars, sizeof unicode_letter_interval_chars 
-                                                                 / sizeof unicode_letter_interval_chars[0]))
-  {
-    return true;
-  }
-
-  return false;
+  return search_char_in_interval_array (c, unicode_letter_intervals, NUM_OF_ELEMENTS (unicode_letter_intervals))
+         || search_char_in_char_array (c, unicode_letter_chars, NUM_OF_ELEMENTS (unicode_letter_chars));
 } /* lit_char_is_unicode_letter */
 
 /**
@@ -181,23 +187,14 @@ lit_char_is_unicode_letter (ecma_char_t c) /**< code unit */
 bool
 lit_char_is_unicode_non_letter_ident_part (ecma_char_t c) /**< code unit */
 {
-  for (unsigned i = 0; i < sizeof unicode_non_letter_identifier_part_intervals_array
-                                              / sizeof unicode_non_letter_identifier_part_intervals_array[0]; ++i)
-  {
-    if (c >= unicode_non_letter_identifier_part_intervals_array[i].l
-        && c <= unicode_non_letter_identifier_part_intervals_array[i].u)
-    {
-      return true;
-    }
-  }
-
-  if (searchForChar (c, unicode_non_letter_identifier_part_interval_chars, sizeof unicode_non_letter_identifier_part_interval_chars 
-                                                                 / sizeof unicode_non_letter_identifier_part_interval_chars[0]))
+  if (LIT_CHAR_ASCII_DIGITS_BEGIN <= c && c <= LIT_CHAR_ASCII_DIGITS_END)
   {
     return true;
   }
-
-  return false;
+  return search_char_in_interval_array (c, unicode_non_letter_ident_part_intervals,
+                                        NUM_OF_ELEMENTS (unicode_non_letter_ident_part_intervals))
+         || search_char_in_char_array (c, unicode_non_letter_ident_part_chars,
+                                       NUM_OF_ELEMENTS (unicode_non_letter_ident_part_chars));
 } /* lit_char_is_unicode_non_letter_ident_part */
 
 /**
