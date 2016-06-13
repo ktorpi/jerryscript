@@ -11,6 +11,10 @@ url: "http://samsung.github.io" # the base hostname & protocol for your site
 # Build settings
 highlighter: rouge
 
-markdown: kramdown
-kramdown:
-  input: GFM
+#markdown: kramdown
+#kramdown:
+#  input: GFM
+
+markdown: redcarpet2
+redcarpet:
+  extensions: ["no_intra_emphasis", "fenced_code_blocks", "autolink", "tables", "with_toc_data"]
