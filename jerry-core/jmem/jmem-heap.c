@@ -364,18 +364,13 @@ void *jmem_heap_alloc_block_internal (const size_t size)
  * Allocation of memory block, running 'try to give memory back' callbacks, if there is not enough memory.
  *
  * Note:
- *      if after running the callbacks, there is still not enough memory, engine is terminated with ERR_OUT_OF_MEMORY.
+ *      if after running the callbacks, there is still not enough memory, NULL value will be returned
  *
- * @return pointer to allocated memory block
+ * @return pointer to allocated memory block or NULL in case of unsuccessful allocation
  */
-void * __attribute__((hot))
-jmem_heap_alloc_block (const size_t size)
+static void *
+jmem_heap_gc_and_alloc_block (const size_t size) /**< required memory size */
 {
-  if (unlikely (size == 0))
-  {
-    return NULL;
-  }
-
   VALGRIND_FREYA_CHECK_MEMPOOL_REQUEST;
 
 #ifdef JMEM_GC_BEFORE_EACH_ALLOC
@@ -411,9 +406,59 @@ jmem_heap_alloc_block (const size_t size)
   }
 
   JERRY_ASSERT (data_space_p == NULL);
+  return data_space_p;
+} /* jmem_heap_gc_and_alloc_block */
+
+
+/**
+ * Allocation of memory block, running 'try to give memory back' callbacks, if there is not enough memory.
+ *
+ * Note:
+ *      If there is still not enough memory after running the callbacks, then the engine will be
+ *      terminated with ERR_OUT_OF_MEMORY.
+ *
+ * @return NULL, if the required memory is 0
+ *         pointer to allocated memory block, otherwise
+ */
+void * __attribute__((hot))
+jmem_heap_alloc_block (const size_t size)  /**< required memory size */
+{
+  if (unlikely (size == 0))
+  {
+    return NULL;
+  }
+
+  void *data_space_p = jmem_heap_gc_and_alloc_block (size);
+
+  if (likely (data_space_p != NULL))
+  {
+    return data_space_p;
+  }
 
   jerry_fatal (ERR_OUT_OF_MEMORY);
 } /* jmem_heap_alloc_block */
+
+/**
+ * Allocation of memory block, running 'try to give memory back' callbacks, if there is not enough memory.
+ *
+ * Note:
+ *      If there is still not enough memory after running the callbacks, NULL will be returned.
+ *
+ * @return NULL, if the required memory size is 0
+ *         also NULL, if the allocation has failed
+ *         pointer to allocated memory block, otherwise
+ */
+void * __attribute__((hot))
+jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory size */
+{
+  if (unlikely (size == 0))
+  {
+    return NULL;
+  }
+
+  return jmem_heap_gc_and_alloc_block (size);
+} /* jmem_heap_alloc_block_null_on_error */
+
 
 /**
  *  Allocate block and store block size.
