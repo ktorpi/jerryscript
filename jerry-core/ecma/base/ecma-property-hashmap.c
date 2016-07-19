@@ -16,6 +16,7 @@
 
 #include "ecma-globals.h"
 #include "ecma-helpers.h"
+#include "ecma-gc.h"
 #include "ecma-property-hashmap.h"
 #include "jrt-libc-includes.h"
 
@@ -65,6 +66,30 @@ static const uint32_t ecma_property_hashmap_steps[ECMA_PROPERTY_HASHMAP_NUMBER_O
 #define ECMA_PROPERTY_HASHMAP_SET_BIT(byte_p, index) \
   ((byte_p)[(index) >> 3] = (uint8_t) ((byte_p)[(index) >> 3] | (1 << ((index) & 0x7))))
 
+/**
+ * Size of the currently allocated memory.
+ */
+extern size_t jmem_heap_allocated_size;
+
+/**
+ * Determines whether the memory consumption is critical.
+ * Memory consumption is defined to be critical if the actully allocated memory size reaches
+ * the 90% percent of the heap size.
+ */
+#define ECMA_CRITICAL_MEMORY_CONSUMPTION(actual_consumption) ((10 * (actual_consumption)) >= (9 * (JMEM_HEAP_SIZE)))
+
+/**
+ * Determines whether the memory consumption is high.
+ * Memory consumption is defined eo be high if the actully allocated memory size reaches
+ * the 80% percent of the heap size.
+ */
+#define ECMA_HIGH_MEMORY_CONSUMPTION(actual_consumption) ((10 * (actual_consumption)) >= (8 * (JMEM_HEAP_SIZE)))
+
+/**
+ * Dermines whether the given size is larger than or equal to then the 8% percent of the heap size.
+ */
+#define ECMA_LARGE_PROPERTY_HASHMAP(hashmap_size) ((100 * (hashmap_size)) >= (8 * (JMEM_HEAP_SIZE)))
+
 #endif /* !CONFIG_ECMA_PROPERTY_HASHMAP_DISABLE */
 
 /**
@@ -77,6 +102,16 @@ ecma_property_hashmap_create (ecma_object_t *object_p) /**< object */
 #ifndef CONFIG_ECMA_PROPERTY_HASHMAP_DISABLE
   JERRY_ASSERT (ecma_get_property_list (object_p) != NULL);
   JERRY_ASSERT (ECMA_PROPERTY_IS_PROPERTY_PAIR (ecma_get_property_list (object_p)));
+
+  if (ECMA_CRITICAL_MEMORY_CONSUMPTION (jmem_heap_allocated_size))
+  {
+    ecma_gc_run (JMEM_FREE_UNUSED_MEMORY_SEVERITY_LOW);
+
+    if (ECMA_CRITICAL_MEMORY_CONSUMPTION (jmem_heap_allocated_size))
+    {
+      return;
+    }
+  }
 
   uint32_t named_property_count = 0;
 
@@ -109,6 +144,16 @@ ecma_property_hashmap_create (ecma_object_t *object_p) /**< object */
   }
 
   size_t total_size = ECMA_PROPERTY_HASHMAP_GET_TOTAL_SIZE (max_property_count);
+
+  if (ECMA_LARGE_PROPERTY_HASHMAP (total_size) && ECMA_HIGH_MEMORY_CONSUMPTION (jmem_heap_allocated_size))
+  {
+    ecma_gc_run (JMEM_FREE_UNUSED_MEMORY_SEVERITY_LOW);
+
+    if (ECMA_HIGH_MEMORY_CONSUMPTION (jmem_heap_allocated_size))
+    {
+      return;
+    }
+  }
 
   ecma_property_hashmap_t *hashmap_p = (ecma_property_hashmap_t *) jmem_heap_alloc_block_null_on_error (total_size);
   if (hashmap_p == NULL)
